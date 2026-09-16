@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
 
-
 const applicationSchema = new mongoose.Schema(
   {
     student: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "StudentProfile",
       required: true,
     },
 
@@ -27,6 +26,7 @@ const applicationSchema = new mongoose.Schema(
       default: "applied",
     },
 
+    // Rule-based skill matching
     matchPercentage: {
       type: Number,
       min: 0,
@@ -45,11 +45,74 @@ const applicationSchema = new mongoose.Schema(
         type: String,
       },
     ],
+
+    // AI-based job matching
+    aiMatch: {
+      matchPercentage: {
+        type: Number,
+        min: 0,
+        max: 100,
+      },
+
+      summary: {
+        type: String,
+      },
+
+      matchedSkills: [
+        {
+          type: String,
+        },
+      ],
+
+      missingSkills: [
+        {
+          type: String,
+        },
+      ],
+
+      relevantExperience: [
+        {
+          type: String,
+        },
+      ],
+
+      relevantProjects: [
+        {
+          type: String,
+        },
+      ],
+
+      educationMatch: {
+        type: Boolean,
+      },
+
+      strengths: [
+        {
+          type: String,
+        },
+      ],
+
+      weaknesses: [
+        {
+          type: String,
+        },
+      ],
+
+      recommendations: [
+        {
+          type: String,
+        },
+      ],
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const Application = mongoose.model("Application", applicationSchema);
+const Application = mongoose.model(
+  "Application",
+  applicationSchema
+);
+
 module.exports = Application;

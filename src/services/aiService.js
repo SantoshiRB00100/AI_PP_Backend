@@ -4,6 +4,11 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+
+// ==========================================
+// AI RESUME ANALYSIS
+// ==========================================
+
 const analyzeResumeWithAI = async (resumeText) => {
   const interaction = await ai.interactions.create({
     model: "gemini-3.6-flash",
@@ -89,6 +94,73 @@ ${resumeText}
   return aiAnalysis;
 };
 
+
+// ==========================================
+// AI JOB MATCHING
+// ==========================================
+
+const matchResumeWithJob = async (resumeText, jobDescription) => {
+  const interaction = await ai.interactions.create({
+    model: "gemini-3.6-flash",
+
+    input: `
+You are an AI job matching assistant for a campus placement portal.
+
+Compare the student's resume with the given job description.
+
+Analyze:
+- Overall suitability
+- Required skills
+- Matching skills
+- Missing skills
+- Relevant experience
+- Relevant projects
+- Education requirements
+- Strengths for this job
+- Weaknesses for this job
+- Practical recommendations
+
+Return ONLY valid JSON.
+Do not use markdown.
+Do not add explanations outside the JSON.
+
+Use exactly this structure:
+
+{
+  "matchPercentage": 0,
+  "summary": "",
+  "matchedSkills": [],
+  "missingSkills": [],
+  "relevantExperience": [],
+  "relevantProjects": [],
+  "educationMatch": true,
+  "strengths": [],
+  "weaknesses": [],
+  "recommendations": []
+}
+
+Rules:
+- matchPercentage must be between 0 and 100.
+- Only consider information actually present in the resume.
+- Do not invent skills, experience, projects, or education.
+- Compare the resume carefully with the actual job description.
+- Give practical recommendations for the student.
+
+STUDENT RESUME:
+${resumeText}
+
+JOB DESCRIPTION:
+${jobDescription}
+`,
+  });
+
+  const aiMatchResult = JSON.parse(interaction.output_text);
+
+  return aiMatchResult;
+};
+
+
 module.exports = {
   analyzeResumeWithAI,
+  matchResumeWithJob,
 };

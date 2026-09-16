@@ -1,3 +1,15 @@
+const normalizeSkill = (skill) => {
+  return skill
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\.(js|jsx|ts|tsx)$/g, "$1")
+    .replace(/\.js$/g, "")
+    .replace(/\.jsx$/g, "")
+    .replace(/\.ts$/g, "")
+    .replace(/\.tsx$/g, "");
+};
+
 const calculateJobMatch = (resumeSkills, requiredSkills) => {
   if (!requiredSkills || requiredSkills.length === 0) {
     return {
@@ -7,13 +19,9 @@ const calculateJobMatch = (resumeSkills, requiredSkills) => {
     };
   }
 
-  const normalizedResumeSkills = resumeSkills.map((skill) =>
-    skill.toLowerCase().trim()
-  );
+  const normalizedResumeSkills = resumeSkills.map(normalizeSkill);
 
-  const normalizedRequiredSkills = requiredSkills.map((skill) =>
-    skill.toLowerCase().trim()
-  );
+  const normalizedRequiredSkills = requiredSkills.map(normalizeSkill);
 
   const matchedSkills = normalizedRequiredSkills.filter((skill) =>
     normalizedResumeSkills.includes(skill)
