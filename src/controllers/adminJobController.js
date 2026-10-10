@@ -1,5 +1,6 @@
 const Job = require("../models/Job");
 
+
 const getPendingJobs = async (req, res) => {
   try {
     const jobs = await Job.find({

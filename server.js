@@ -9,6 +9,13 @@ const resumeRoutes = require("./src/routes/resumeRoutes");
 const jobRoutes = require("./src/routes/jobRoutes");
 const adminJobRoutes = require("./src/routes/adminJobRoutes");
 const applicationRoutes = require("./src/routes/applicationRoutes");
+const interviewRoutes = require("./src/routes/interviewRoutes");
+const adminStudentRoutes = require("./src/routes/adminStudentRoutes");
+const adminCompanyRoutes = require("./src/routes/adminCompanyRoutes");
+const adminApplicationRoutes = require("./src/routes/adminApplicationRoutes");
+const adminInterviewRoutes = require("./src/routes/adminInterviewRoutes");
+const adminDashboardRoutes = require("./src/routes/adminDashboardRoutes");
+const mockInterviewRoutes = require("./src/routes/mockInterviewRoutes");
 
 const app = express();
 
@@ -27,6 +34,13 @@ app.use("/api/resume", resumeRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/admin/jobs", adminJobRoutes);
 app.use("/api/applications", applicationRoutes);
+app.use("/api/interviews", interviewRoutes);
+app.use("/api/admin/students", adminStudentRoutes);
+app.use("/api/admin/companies", adminCompanyRoutes);
+app.use("/api/admin/applications", adminApplicationRoutes);
+app.use("/api/admin/interviews", adminInterviewRoutes);
+app.use("/api/admin/dashboard", adminDashboardRoutes);
+app.use("/api/mock-interviews", mockInterviewRoutes);
 
 // Test route
 app.get("/", (req, res) => {
