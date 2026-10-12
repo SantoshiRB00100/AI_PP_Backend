@@ -6,6 +6,7 @@ const authorizeRoles = require("../middleware/roleMiddleware");
 const {
   startMockInterview,
   submitMockInterviewAnswers,
+  getMyMockInterviews,
 } = require("../controllers/mockInterviewController");
 
 const router = express.Router();
@@ -16,6 +17,14 @@ router.post(
   protect,
   authorizeRoles("student"),
   startMockInterview
+);
+
+// Get the logged-in student's interview history
+router.get(
+  "/my-interviews",
+  protect,
+  authorizeRoles("student"),
+  getMyMockInterviews
 );
 
 // Submit answers and receive AI evaluation

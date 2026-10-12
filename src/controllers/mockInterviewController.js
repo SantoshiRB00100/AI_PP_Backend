@@ -1,26 +1,15 @@
 
 const MockInterview = require("../models/MockInterview");
 const StudentProfile = require("../models/StudentProfile");
+
 const {
   generateMockInterviewQuestions,
   evaluateMockInterviewAnswers,
 } = require("../services/aiService");
 
-// ==========================================
-// START MOCK INTERVIEW
-// ==========================================
-
+// Start a mock interview
 const startMockInterview = async (req, res) => {
   try {
-    const { role } = req.body;
-
-    if (!role || !role.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Role is required",
-      });
-    }
-
     const student = await StudentProfile.findOne({
       user: req.user._id,
     });
@@ -32,6 +21,15 @@ const startMockInterview = async (req, res) => {
       });
     }
 
+    const { role } = req.body;
+
+    if (!role || !role.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a job role",
+      });
+    }
+
     const questions = await generateMockInterviewQuestions(
       role.trim(),
       student.skills || []
@@ -40,8 +38,8 @@ const startMockInterview = async (req, res) => {
     const mockInterview = await MockInterview.create({
       student: student._id,
       role: role.trim(),
-      questions: questions.map((question) => ({
-        question,
+      questions: questions.map((item) => ({
+        question: item.question,
       })),
     });
 
@@ -51,7 +49,7 @@ const startMockInterview = async (req, res) => {
       mockInterview,
     });
   } catch (error) {
-    console.error("Start Mock Interview Error:", error.message);
+    console.error("Start mock interview error:", error);
 
     return res.status(500).json({
       success: false,
@@ -60,19 +58,16 @@ const startMockInterview = async (req, res) => {
   }
 };
 
-// ==========================================
-// SUBMIT ANSWERS AND GET AI EVALUATION
-// ==========================================
-
+// Submit answers and receive AI evaluation
 const submitMockInterviewAnswers = async (req, res) => {
   try {
     const { interviewId } = req.params;
     const { answers } = req.body;
 
-    if (!Array.isArray(answers) || answers.length === 0) {
+    if (!Array.isArray(answers)) {
       return res.status(400).json({
         success: false,
-        message: "Please submit at least one answer",
+        message: "Answers must be provided as an array",
       });
     }
 
@@ -99,7 +94,8 @@ const submitMockInterviewAnswers = async (req, res) => {
       });
     }
 
-    // Validate submitted question IDs and save answers.
+    const submittedAnswers = [];
+
     for (const item of answers) {
       if (
         !item.questionId ||
@@ -107,7 +103,7 @@ const submitMockInterviewAnswers = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Each answer must contain questionId and answer",
+          message: "Each answer needs a questionId and answer",
         });
       }
 
@@ -121,78 +117,53 @@ const submitMockInterviewAnswers = async (req, res) => {
       }
 
       question.answer = item.answer.trim();
+
+      if (question.answer) {
+        submittedAnswers.push({
+          questionId: question._id.toString(),
+          question: question.question,
+          answer: question.answer,
+        });
+      }
     }
 
-    const answeredQuestions = mockInterview.questions.filter(
-      (question) => question.answer.trim().length > 0
-    );
-
-    if (answeredQuestions.length === 0) {
+    if (submittedAnswers.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Please provide at least one non-empty answer",
+        message: "Please answer at least one question",
       });
     }
 
     const evaluation = await evaluateMockInterviewAnswers(
       mockInterview.role,
-      answeredQuestions.map((question) => ({
-        questionId: question._id.toString(),
-        question: question.question,
-        answer: question.answer,
-      }))
+      submittedAnswers
     );
 
-    if (
-      !evaluation ||
-      !Array.isArray(evaluation.evaluations)
-    ) {
-      throw new Error("AI returned an invalid evaluation");
-    }
-
     for (const result of evaluation.evaluations) {
-      const question = mockInterview.questions.id(result.questionId);
+      const question = mockInterview.questions.id(
+        result.questionId
+      );
 
-      if (!question) continue;
-
-      const score = Number(result.score);
-
-      question.score = Number.isFinite(score)
-        ? Math.max(0, Math.min(10, score))
-        : 0;
-
-      question.feedback =
-        typeof result.feedback === "string"
-          ? result.feedback
-          : "No feedback provided.";
+      if (question) {
+        question.score = result.score;
+        question.feedback = result.feedback;
+      }
     }
 
-    // Calculate the overall score out of 100.
-    const evaluatedQuestions = answeredQuestions
-      .map((question) => mockInterview.questions.id(question._id))
-      .filter((question) => question && question.feedback);
-
-    const totalScore = evaluatedQuestions.reduce(
-      (sum, question) => sum + question.score,
+    const totalScore = evaluation.evaluations.reduce(
+      (sum, item) => sum + item.score,
       0
     );
 
-    mockInterview.overallScore =
-      evaluatedQuestions.length > 0
-        ? Math.round(
-            (totalScore / (evaluatedQuestions.length * 10)) * 100
-          )
-        : 0;
+    mockInterview.overallScore = Math.round(
+      (totalScore / evaluation.evaluations.length) * 10
+    );
 
     mockInterview.overallFeedback =
-      typeof evaluation.overallFeedback === "string"
-        ? evaluation.overallFeedback
-        : "Review the individual feedback to improve your answers.";
+      evaluation.overallFeedback;
 
     mockInterview.improvementSuggestions =
-      Array.isArray(evaluation.improvementSuggestions)
-        ? evaluation.improvementSuggestions
-        : [];
+      evaluation.improvementSuggestions;
 
     await mockInterview.save();
 
@@ -202,7 +173,7 @@ const submitMockInterviewAnswers = async (req, res) => {
       result: mockInterview,
     });
   } catch (error) {
-    console.error("Submit Mock Interview Answers Error:", error.message);
+    console.error("Submit mock interview error:", error);
 
     return res.status(500).json({
       success: false,
@@ -211,7 +182,42 @@ const submitMockInterviewAnswers = async (req, res) => {
   }
 };
 
+// Get the logged-in student's mock interview history
+const getMyMockInterviews = async (req, res) => {
+  try {
+    const student = await StudentProfile.findOne({
+      user: req.user._id,
+    });
+
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student profile not found",
+      });
+    }
+
+    const mockInterviews = await MockInterview.find({
+      student: student._id,
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: mockInterviews.length,
+      mockInterviews,
+    });
+  } catch (error) {
+    console.error("Get mock interview history error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch mock interview history",
+    });
+  }
+};
+
 module.exports = {
   startMockInterview,
   submitMockInterviewAnswers,
+  getMyMockInterviews,
 };
+
