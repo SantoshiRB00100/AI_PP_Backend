@@ -17,6 +17,8 @@ const adminInterviewRoutes = require("./src/routes/adminInterviewRoutes");
 const adminDashboardRoutes = require("./src/routes/adminDashboardRoutes");
 const mockInterviewRoutes = require("./src/routes/mockInterviewRoutes");
 const skillAssessmentRoutes = require("./src/routes/skillAssessmentRoutes");
+const careerAssistantRoutes = require("./src/routes/careerAssistantRoutes");
+const skillRecommendationRoutes = require("./src/routes/skillRecommendationRoutes");
 
 const app = express();
 
@@ -43,6 +45,8 @@ app.use("/api/admin/interviews", adminInterviewRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/mock-interviews", mockInterviewRoutes);
 app.use("/api/skill-assessments", skillAssessmentRoutes);
+app.use("/api/career-assistant", careerAssistantRoutes);
+app.use("/api/skill-recommendations", skillRecommendationRoutes);
 
 // Test route
 app.get("/", (req, res) => {

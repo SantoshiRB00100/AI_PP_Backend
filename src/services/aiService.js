@@ -306,10 +306,10 @@ ${JSON.stringify(answers)}
 // ==========================================
 
 module.exports = {
+  askLocalAI,
   analyzeResumeWithAI,
   matchResumeWithJob,
   generateMockInterviewQuestions,
   evaluateMockInterviewAnswers,
 };
-
 
